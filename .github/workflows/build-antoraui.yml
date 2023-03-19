@@ -1,0 +1,102 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm install --quiet --no-progress
+
+  verify:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm install --quiet --no-progress
+      - name: Run lint
+        run: npm run lint
+
+  deploy-stable:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && contains(github.event_name, 'push')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm install --quiet --no-progress
+      - name: Build stable bundle
+        run: npm run bundle
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ui-bundle
+          path: build/ui-bundle.zip
+
+  deploy-dev:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master' && contains(github.event_name, 'push')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm install --quiet --no-progress
+      - name: Build dev bundle
+        run: npm run bundle
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ui-bundle
+          path: build/ui-bundle.zip
+
+  preview:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && contains(github.event_name, 'push')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}

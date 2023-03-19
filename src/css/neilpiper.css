@@ -1,0 +1,14 @@
+:root {
+  /* colors */
+  --color-Green: #86bc25;
+
+  /* GRAYS */
+  --color-Coolgray2: rgb(208, 208, 206, 100%);
+  --color-Coolgray4: rgb(187, 188, 188, 100%);
+  --color-Coolgray6: rgb(167, 168, 170, 100%);
+  --color-Coolgray7: rgb(151, 153, 155, 100%);
+  --color-Coolgray9: rgb(117, 120, 123, 100%);
+  --color-Coolgray10: rgb(99, 102, 106, 100%);
+  --color-Coolgray11: rgb(83, 86, 90, 100%);
+
+}
