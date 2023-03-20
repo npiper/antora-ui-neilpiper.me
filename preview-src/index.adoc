@@ -5,6 +5,7 @@ Author Name
 :!example-caption:
 :!table-caption:
 :page-pagination:
+:experimental:
 
 [.float-group]
 --
@@ -164,8 +165,6 @@ No sea, at invenire voluptaria mnesarchum has.
 Ex nam suas nemore dignissim, vel apeirian democritum et.
 At ornatus splendide sed, phaedrum omittantur usu an, vix an noster voluptatibus.
 
----
-
 .Ordered list with customized numeration
 [upperalpha]
 . potenti donec cubilia tincidunt
@@ -193,6 +192,8 @@ At ornatus splendide sed, phaedrum omittantur usu an, vix an noster voluptatibus
 
 * [ ] todo
 * [x] done!
+
+Showing a gear icon: icon:gear[]
 
 Vis veri graeci legimus ad.
 

@@ -27,6 +27,65 @@ You can see a preview of the default UI at {url-preview}.
 While the default UI is ready to be used with Antora, the intent is that you'll fork it and customize it for your own needs.
 It's intentionally minimalistic so as to give you a good starting point without requiring too much effort to customize.
 
+== Customisation
+
+*Modified Files*
+
+```
+    /src/css/site.css
+    /src/css/neilpiper.css
+    /src/css/doc.css
+    /src/css/header.css
+    /src/css/typeface-open-sans.css
+    package.json
+```
+
+== FontAwesome 4.7 Additions (Experimental)
+
+[FontAwesome 4.7](https://fontawesome.com/v4/icons/)
+
+**How to use**
+
+[Asciidoctor `:icons: font`
+mode](https://docs.asciidoctor.org/asciidoc/latest/macros/icons-font/)
+
+[Asciidoctor `icon:name`
+macro](https://docs.asciidoctor.org/asciidoc/latest/macros/icon-macro/)
+
+FontAwesome asciidoc icons don’t work in default Antora at the moment,
+but there is a suggestion to incorporate them into the antora-ui-default
+with this
+
+PR: [antora-ui-default Gitlab merge request
+121](https://gitlab.com/antora/antora-ui-default/-/merge_requests/121/diffs)
+
+This codebase includes the merged changes of this PR to allow us to use
+this in Deloitte style, once supported in the main branch of antora it
+should be removed. [antora-ui-default Issue 58 : icons not
+working](https://gitlab.com/antora/antora-ui-default/-/issues/58)
+
+    package.json
+    /src/css/font-awesome.css
+    /docs/modules/ROOT/pages/add-fonts.adoc
+    gulp.d/tasks/build.js
+    preview-src/index.adoc
+
+[antora-ui-default Merge Request 121
+Diffs](https://gitlab.com/antora/antora-ui-default/-/merge_requests/121/diffs\#c07fdcf8a6023ff78d769cabfb9010925534ed11)
+
+    icon:gear[]
+
+![gear](./docs/modules/ROOT/images/gear.png)
+
+
+
+== References 
+
+
+https://medium.com/geekculture/2022-fork-a-repository-from-gilab-to-github-58690ee5df1c[Forking from Gitlab to Github]
+
+
+
 == Code of Conduct
 
 The Antora project and its project spaces are governed by our https://gitlab.com/antora/antora/-/blob/HEAD/CODE-OF-CONDUCT.adoc[Code of Conduct].

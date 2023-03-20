@@ -2,6 +2,7 @@
 
 const autoprefixer = require('autoprefixer')
 const browserify = require('browserify')
+const buffer = require('vinyl-buffer')
 const concat = require('gulp-concat')
 const cssnano = require('cssnano')
 const fs = require('fs-extra')
@@ -43,14 +44,25 @@ module.exports = (src, dest, preview) => () => {
           const basename = ospath.basename(abspath)
           const destpath = ospath.join(dest, 'font', basename)
           if (!fs.pathExistsSync(destpath)) fs.copySync(abspath, destpath)
-          return path.join('..', 'font', basename)
+          return path.join('..', 'font', basename) + asset.search + asset.hash
+        },
+      },
+      {
+        filter: '**/~font-awesome/fonts/*',
+        url: (asset) => {
+          const relpath = asset.pathname.substr(1)
+          const abspath = require.resolve(relpath)
+          const basename = ospath.basename(abspath)
+          const destpath = ospath.join(dest, 'font', basename)
+          if (!fs.pathExistsSync(destpath)) fs.copySync(abspath, destpath)
+          return path.join('..', 'font', basename) + asset.search + asset.hash
         },
       },
     ]),
     postcssVar({ preserve: preview }),
     // NOTE to make vars.css available to all top-level stylesheets, use the next line in place of the previous one
     //postcssVar({ importFrom: path.join(src, 'css', 'vars.css'), preserve: preview }),
-    preview ? postcssCalc : () => {}, // cssnano already applies postcssCalc
+    preview ? postcssCalc : () => {},
     autoprefixer,
     preview
       ? () => {}
@@ -58,17 +70,45 @@ module.exports = (src, dest, preview) => () => {
   ]
 
   return merge(
-    vfs.src('ui.yml', { ...opts, allowEmpty: true }),
     vfs
-      .src('js/+([0-9])-*.js', { ...opts, read: false, sourcemaps })
-      .pipe(bundle(opts))
-      .pipe(uglify({ output: { comments: /^! / } }))
+      .src('ui.yml', { ...opts, allowEmpty: true }),
+    vfs
+      .src('js/+([0-9])-*.js', { ...opts, sourcemaps })
+      .pipe(uglify())
       // NOTE concat already uses stat from newest combined file
       .pipe(concat('js/site.js')),
     vfs
       .src('js/vendor/*([^.])?(.bundle).js', { ...opts, read: false })
-      .pipe(bundle(opts))
-      .pipe(uglify({ output: { comments: /^! / } })),
+      .pipe(
+        // see https://gulpjs.org/recipes/browserify-multiple-destination.html
+        map((file, enc, next) => {
+          if (file.relative.endsWith('.bundle.js')) {
+            const mtimePromises = []
+            const bundlePath = file.path
+            browserify(file.relative, { basedir: src, detectGlobals: false })
+              .plugin('browser-pack-flat/plugin')
+              .on('file', (bundledPath) => {
+                if (bundledPath !== bundlePath) mtimePromises.push(fs.stat(bundledPath).then(({ mtime }) => mtime))
+              })
+              .bundle((bundleError, bundleBuffer) =>
+                Promise.all(mtimePromises).then((mtimes) => {
+                  const newestMtime = mtimes.reduce((max, curr) => (curr > max ? curr : max), file.stat.mtime)
+                  if (newestMtime > file.stat.mtime) file.stat.mtimeMs = +(file.stat.mtime = newestMtime)
+                  if (bundleBuffer !== undefined) file.contents = bundleBuffer
+                  file.path = file.path.slice(0, file.path.length - 10) + '.js'
+                  next(bundleError, file)
+                })
+              )
+          } else {
+            fs.readFile(file.path, 'UTF-8').then((contents) => {
+              file.contents = Buffer.from(contents)
+              next(null, file)
+            })
+          }
+        })
+      )
+      .pipe(buffer())
+      .pipe(uglify()),
     vfs
       .src('js/vendor/*.min.js', opts)
       .pipe(map((file, enc, next) => next(null, Object.assign(file, { extname: '' }, { extname: '.js' })))),
@@ -101,32 +141,6 @@ module.exports = (src, dest, preview) => () => {
     vfs.src('partials/*.hbs', opts),
     vfs.src('static/**/*[!~]', { ...opts, base: ospath.join(src, 'static'), dot: true })
   ).pipe(vfs.dest(dest, { sourcemaps: sourcemaps && '.' }))
-}
-
-function bundle ({ base: basedir, ext: bundleExt = '.bundle.js' }) {
-  return map((file, enc, next) => {
-    if (bundleExt && file.relative.endsWith(bundleExt)) {
-      const mtimePromises = []
-      const bundlePath = file.path
-      browserify(file.relative, { basedir, detectGlobals: false })
-        .plugin('browser-pack-flat/plugin')
-        .on('file', (bundledPath) => {
-          if (bundledPath !== bundlePath) mtimePromises.push(fs.stat(bundledPath).then(({ mtime }) => mtime))
-        })
-        .bundle((bundleError, bundleBuffer) =>
-          Promise.all(mtimePromises).then((mtimes) => {
-            const newestMtime = mtimes.reduce((max, curr) => (curr > max ? curr : max), file.stat.mtime)
-            if (newestMtime > file.stat.mtime) file.stat.mtimeMs = +(file.stat.mtime = newestMtime)
-            if (bundleBuffer !== undefined) file.contents = bundleBuffer
-            next(bundleError, Object.assign(file, { path: file.path.slice(0, file.path.length - 10) + '.js' }))
-          })
-        )
-      return
-    }
-    fs.readFile(file.path, 'UTF-8').then((contents) => {
-      next(null, Object.assign(file, { contents: Buffer.from(contents) }))
-    })
-  })
 }
 
 function postcssPseudoElementFixer (css, result) {
