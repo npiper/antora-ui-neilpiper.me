@@ -57,7 +57,7 @@ jobs:
       - name: Install dependencies
         run: npm install --quiet --no-progress
       - name: Build stable bundle
-        run: npm run bundle
+        run: node_modules/.bin/gulp bundle
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
