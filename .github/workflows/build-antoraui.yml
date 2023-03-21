@@ -82,8 +82,8 @@ jobs:
         run: npm install --quiet --no-progress
       - name: Build dev bundle
         run: npm run bundle
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
+      - name: Publish Binaries
+        uses: skx/github-action-publish-binaries@release-2.0
         with:
           name: ui-bundle
           path: build/ui-bundle.zip
